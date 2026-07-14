@@ -1,0 +1,23 @@
+body{
+    background:#f8f9fa;
+}
+
+.card{
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:scale(1.02);
+}
+
+textarea{
+    resize:none;
+}
+
+.navbar-brand{
+    font-weight:bold;
+}
+
+.card-title{
+    color:#0d6efd;
+}

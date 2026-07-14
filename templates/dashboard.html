@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2>Welcome, {{ session["username"] }}</h2>
+        <p class="text-muted">Manage your notes</p>
+    </div>
+
+    <a href="{{ url_for('notes.add_note') }}"
+       class="btn btn-success">
+        + Add Note
+    </a>
+
+</div>
+
+{% if notes %}
+
+<div class="row">
+
+{% for note in notes %}
+
+<div class="col-md-6 col-lg-4 mb-4">
+
+    <div class="card shadow-sm h-100">
+
+        <div class="card-body">
+
+            <h4 class="card-title">
+
+                {{ note.title }}
+
+            </h4>
+
+            <p class="card-text">
+
+                {{ note.description }}
+
+            </p>
+
+        </div>
+
+        <div class="card-footer bg-white">
+
+            <a href="{{ url_for('notes.edit_note', note_id=note.id) }}"
+               class="btn btn-warning btn-sm">
+
+                Edit
+
+            </a>
+
+            <a href="{{ url_for('notes.edit_note', note_id=note.id) }}"
+               class="btn btn-danger btn-sm"
+               onclick="return confirm('Delete this note?')">
+
+                Delete
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% else %}
+
+<div class="alert alert-info">
+
+    <h4>No Notes Available</h4>
+
+    <p>Create your first note.</p>
+
+</div>
+
+{% endif %}
+
+{% endblock %}
