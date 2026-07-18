@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block content %}
 
@@ -90,12 +90,12 @@
 
             <h4 class="card-title">
                 {% if note.is_pinned %}<span title="Pinned">📌</span>{% endif %}
-                {{ note.title }}
+                <a href="{{ url_for('notes.view_note', note_id=note.id) }}" class="text-decoration-none text-dark">{{ note.title }}</a>
             </h4>
 
             <p class="card-text">
-                {{ note.description }}
-            </p>
+    {{ note.description | safe }}
+</p>
 
             {% if note.category %}
             <span class="badge bg-secondary">{{ note.category.name }}</span>
@@ -178,3 +178,5 @@
 {% endif %}
 
 {% endblock %}
+
+

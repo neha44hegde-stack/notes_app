@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from extensions import db
 
 
-# Association table for the many-to-many Note <-> Tag relationship
 note_tags = db.Table(
     "note_tags",
     db.Column("note_id", db.Integer, db.ForeignKey("notes.id"), primary_key=True),
@@ -64,6 +63,28 @@ class Tag(db.Model):
         return {"id": self.id, "name": self.name}
 
 
+class Attachment(db.Model):
+
+    __tablename__ = "attachments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    note_id = db.Column(db.Integer, db.ForeignKey("notes.id"), nullable=False)
+
+    uploaded_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "filename": self.filename,
+            "original_filename": self.original_filename,
+            "uploaded_at": self.uploaded_at.isoformat(),
+        }
+
+
 class Note(db.Model):
 
     __tablename__ = "notes"
@@ -93,6 +114,9 @@ class Note(db.Model):
     tags = db.relationship(
         "Tag", secondary=note_tags, backref=db.backref("notes", lazy=True)
     )
+    attachments = db.relationship(
+        "Attachment", backref="note", lazy=True, cascade="all, delete"
+    )
 
     def to_dict(self):
         return {
@@ -102,6 +126,7 @@ class Note(db.Model):
             "user_id": self.user_id,
             "category": self.category.to_dict() if self.category else None,
             "tags": [tag.to_dict() for tag in self.tags],
+            "attachments": [a.to_dict() for a in self.attachments],
             "is_pinned": self.is_pinned,
             "is_archived": self.is_archived,
             "is_deleted": self.is_deleted,

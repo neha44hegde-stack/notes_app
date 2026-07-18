@@ -1,3 +1,7 @@
+import os
+import uuid
+from datetime import datetime, timezone
+
 from flask import (
     Blueprint,
     render_template,
@@ -5,17 +9,36 @@ from flask import (
     redirect,
     url_for,
     session,
-    flash
+    flash,
+    current_app,
+    send_from_directory,
+    abort,
 )
+from werkzeug.utils import secure_filename
+import bleach
 
 from extensions import db
-from models import Note, Tag, Category
+from models import Note, Tag, Category, Attachment
 
 notes_bp = Blueprint("notes", __name__)
 
+ALLOWED_TAGS = [
+    "p", "br", "strong", "em", "u", "s", "ul", "ol", "li",
+    "h1", "h2", "h3", "blockquote", "a", "code", "pre", "span"
+]
+ALLOWED_ATTRS = {
+    "a": ["href", "target", "rel"],
+    "span": ["class"],
+}
+
+
+def _sanitize_html(raw_html):
+    return bleach.clean(
+        raw_html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True
+    )
+
 
 def _get_or_create_tags(tag_names, user_id):
-    """Given a list of tag name strings, fetch existing tags or create new ones."""
     tags = []
     for name in tag_names:
         name = name.strip().lower()
@@ -25,9 +48,41 @@ def _get_or_create_tags(tag_names, user_id):
         if not tag:
             tag = Tag(name=name, user_id=user_id)
             db.session.add(tag)
-            db.session.flush()  # so tag.id is available before commit
+            db.session.flush()
         tags.append(tag)
     return tags
+
+
+def _allowed_file(filename):
+    if "." not in filename:
+        return False
+    ext = filename.rsplit(".", 1)[1].lower()
+    return ext in current_app.config["ALLOWED_EXTENSIONS"]
+
+
+def _save_attachments(files, note):
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    os.makedirs(upload_folder, exist_ok=True)
+
+    for file in files:
+        if not file or file.filename == "":
+            continue
+        if not _allowed_file(file.filename):
+            flash(f"File type not allowed: {file.filename}", "warning")
+            continue
+
+        original_name = secure_filename(file.filename)
+        ext = original_name.rsplit(".", 1)[1].lower()
+        stored_name = f"{uuid.uuid4().hex}.{ext}"
+
+        file.save(os.path.join(upload_folder, stored_name))
+
+        attachment = Attachment(
+            filename=stored_name,
+            original_filename=original_name,
+            note_id=note.id,
+        )
+        db.session.add(attachment)
 
 
 @notes_bp.route("/dashboard")
@@ -37,7 +92,7 @@ def dashboard():
         return redirect(url_for("auth.login"))
 
     user_id = session["user_id"]
-    view = request.args.get("view", "active")  # active | archived | trash
+    view = request.args.get("view", "active")
     query_text = request.args.get("q", "").strip()
     category_id = request.args.get("category_id", type=int)
     tag_id = request.args.get("tag_id", type=int)
@@ -65,7 +120,6 @@ def dashboard():
     if tag_id:
         query = query.filter(Note.tags.any(Tag.id == tag_id))
 
-    # Pinned notes first, then most recently updated
     notes = query.order_by(Note.is_pinned.desc(), Note.updated_at.desc()).all()
 
     categories = Category.query.filter_by(user_id=user_id).all()
@@ -92,9 +146,9 @@ def add_note():
 
     if request.method == "POST":
         title = request.form["title"]
-        description = request.form["description"]
+        description = _sanitize_html(request.form["description"])
         category_id = request.form.get("category_id") or None
-        tag_input = request.form.get("tags", "")  # comma-separated string
+        tag_input = request.form.get("tags", "")
 
         note = Note(
             title=title,
@@ -105,6 +159,11 @@ def add_note():
         note.tags = _get_or_create_tags(tag_input.split(","), user_id)
 
         db.session.add(note)
+        db.session.flush()  # get note.id before commit, for attachments
+
+        uploaded_files = request.files.getlist("attachments")
+        _save_attachments(uploaded_files, note)
+
         db.session.commit()
 
         flash("Note added successfully", "success")
@@ -129,11 +188,14 @@ def edit_note(note_id):
 
     if request.method == "POST":
         note.title = request.form["title"]
-        note.description = request.form["description"]
+        note.description = _sanitize_html(request.form["description"])
         note.category_id = request.form.get("category_id") or None
 
         tag_input = request.form.get("tags", "")
         note.tags = _get_or_create_tags(tag_input.split(","), user_id)
+
+        uploaded_files = request.files.getlist("attachments")
+        _save_attachments(uploaded_files, note)
 
         db.session.commit()
 
@@ -148,11 +210,8 @@ def edit_note(note_id):
 
 @notes_bp.route("/delete_note/<int:note_id>")
 def delete_note(note_id):
-    """Soft-delete: moves the note to Trash instead of removing it."""
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
-
-    from datetime import datetime, timezone
 
     note = Note.query.get_or_404(note_id)
 
@@ -189,7 +248,6 @@ def restore_note(note_id):
 
 @notes_bp.route("/permanent_delete/<int:note_id>")
 def permanent_delete(note_id):
-    """Actually removes a note from the database — only allowed from Trash."""
     if "user_id" not in session:
         return redirect(url_for("auth.login"))
 
@@ -202,6 +260,12 @@ def permanent_delete(note_id):
     if not note.is_deleted:
         flash("Move the note to trash before deleting permanently", "warning")
         return redirect(url_for("notes.dashboard"))
+
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    for attachment in note.attachments:
+        file_path = os.path.join(upload_folder, attachment.filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
     db.session.delete(note)
     db.session.commit()
@@ -240,7 +304,7 @@ def toggle_archive(note_id):
 
     note.is_archived = not note.is_archived
     if note.is_archived:
-        note.is_pinned = False  # archived notes shouldn't stay pinned to the top
+        note.is_pinned = False
     db.session.commit()
 
     flash(
@@ -248,3 +312,58 @@ def toggle_archive(note_id):
         "info",
     )
     return redirect(url_for("notes.dashboard"))
+
+
+@notes_bp.route("/download_attachment/<int:attachment_id>")
+def download_attachment(attachment_id):
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    attachment = Attachment.query.get_or_404(attachment_id)
+
+    if attachment.note.user_id != session["user_id"]:
+        abort(403)
+
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    return send_from_directory(
+        upload_folder,
+        attachment.filename,
+        as_attachment=True,
+        download_name=attachment.original_filename,
+    )
+
+
+@notes_bp.route("/delete_attachment/<int:attachment_id>")
+def delete_attachment(attachment_id):
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    attachment = Attachment.query.get_or_404(attachment_id)
+    note = attachment.note
+
+    if note.user_id != session["user_id"]:
+        abort(403)
+
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    file_path = os.path.join(upload_folder, attachment.filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    db.session.delete(attachment)
+    db.session.commit()
+
+    flash("Attachment removed", "info")
+    return redirect(url_for("notes.edit_note", note_id=note.id))
+@notes_bp.route("/view_note/<int:note_id>")
+def view_note(note_id):
+    if "user_id" not in session:
+        flash("You must be logged in to view this page", "warning")
+        return redirect(url_for("auth.login"))
+
+    note = Note.query.get_or_404(note_id)
+
+    if note.user_id != session["user_id"]:
+        flash("You cannot view this note", "danger")
+        return redirect(url_for("notes.dashboard"))
+
+    return render_template("view_note.html", note=note)
