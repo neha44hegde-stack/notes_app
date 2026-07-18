@@ -2,8 +2,9 @@ import os
 from flask import Flask
 from extensions import db
 from config import config
+from flask_migrate import Migrate
 
-from models import User, Note
+from models import User, Note, Tag, Category
 
 
 def create_app():
@@ -12,6 +13,7 @@ def create_app():
     app.config.from_object(config)
 
     db.init_app(app)
+    migrate = Migrate(app, db)
 
     os.makedirs(app.instance_path, exist_ok=True)
 
@@ -34,9 +36,6 @@ def create_app():
         <p>My Notes App</p>
         <p>Project setup done and database connected.</p>
         """
-
-    with app.app_context():
-        db.create_all()
 
     print(app.url_map)
 

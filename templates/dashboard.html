@@ -49,3 +49,132 @@
 
     <div class="col-md-3">
         <select name="category_id" class="form-select">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}"
+                {% if request.args.get('category_id')|int == category.id %}selected{% endif %}>
+                {{ category.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <select name="tag_id" class="form-select">
+            <option value="">All Tags</option>
+            {% for tag in tags %}
+            <option value="{{ tag.id }}"
+                {% if request.args.get('tag_id')|int == tag.id %}selected{% endif %}>
+                {{ tag.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+</form>
+
+{% if notes %}
+
+<div class="row">
+
+{% for note in notes %}
+
+<div class="col-md-6 col-lg-4 mb-4">
+
+    <div class="card shadow-sm h-100 {% if note.is_pinned %}border-warning{% endif %}">
+
+        <div class="card-body">
+
+            <h4 class="card-title">
+                {% if note.is_pinned %}<span title="Pinned">📌</span>{% endif %}
+                {{ note.title }}
+            </h4>
+
+            <p class="card-text">
+                {{ note.description }}
+            </p>
+
+            {% if note.category %}
+            <span class="badge bg-secondary">{{ note.category.name }}</span>
+            {% endif %}
+
+            {% for tag in note.tags %}
+            <span class="badge bg-light text-dark border">#{{ tag.name }}</span>
+            {% endfor %}
+
+        </div>
+
+        <div class="card-footer bg-white">
+
+            {% if view == 'trash' %}
+
+                <a href="{{ url_for('notes.restore_note', note_id=note.id) }}"
+                   class="btn btn-success btn-sm">
+                    Restore
+                </a>
+
+                <a href="{{ url_for('notes.permanent_delete', note_id=note.id) }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('Permanently delete this note? This cannot be undone.')">
+                    Delete Forever
+                </a>
+
+            {% else %}
+
+                <a href="{{ url_for('notes.edit_note', note_id=note.id) }}"
+                   class="btn btn-warning btn-sm">
+                    Edit
+                </a>
+
+                <a href="{{ url_for('notes.toggle_pin', note_id=note.id) }}"
+                   class="btn btn-outline-secondary btn-sm">
+                    {% if note.is_pinned %}Unpin{% else %}Pin{% endif %}
+                </a>
+
+                <a href="{{ url_for('notes.toggle_archive', note_id=note.id) }}"
+                   class="btn btn-outline-secondary btn-sm">
+                    {% if note.is_archived %}Unarchive{% else %}Archive{% endif %}
+                </a>
+
+                <a href="{{ url_for('notes.delete_note', note_id=note.id) }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('Move this note to trash?')">
+                    Delete
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% else %}
+
+<div class="alert alert-info">
+
+    <h4>No Notes Available</h4>
+
+    <p>
+    {% if view == 'trash' %}
+        Trash is empty.
+    {% elif view == 'archived' %}
+        No archived notes.
+    {% else %}
+        Create your first note.
+    {% endif %}
+    </p>
+
+</div>
+
+{% endif %}
+
+{% endblock %}
