@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
+from flask_jwt_extended import JWTManager
 
 naming_convention = {
     "ix": "ix_%(column_0_label)s",
@@ -11,3 +12,4 @@ naming_convention = {
 
 metadata = MetaData(naming_convention=naming_convention)
 db = SQLAlchemy(metadata=metadata)
+jwt = JWTManager()

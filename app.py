@@ -1,10 +1,11 @@
 import os
 from flask import Flask
-from extensions import db
+from extensions import db, jwt
 from config import config
 from flask_migrate import Migrate
+from flasgger import Swagger
 
-from models import User, Note, Tag, Category
+from models import User, Note, Tag, Category, Attachment
 
 
 def create_app():
@@ -14,6 +15,8 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
+    jwt.init_app(app)
+    swagger = Swagger(app)
 
     os.makedirs(app.instance_path, exist_ok=True)
 
