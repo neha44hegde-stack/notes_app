@@ -51,6 +51,45 @@ required>{{ note.description }}</textarea>
 
 </div>
 
+<div class="mb-3">
+
+<label>
+
+Category
+
+</label>
+
+<select name="category_id" class="form-select">
+    <option value="">No category</option>
+    {% for category in categories %}
+    <option value="{{ category.id }}"
+        {% if note.category_id == category.id %}selected{% endif %}>
+        {{ category.name }}
+    </option>
+    {% endfor %}
+</select>
+
+</div>
+
+<div class="mb-3">
+
+<label>
+
+Tags
+
+</label>
+
+<input
+type="text"
+class="form-control"
+name="tags"
+value="{{ existing_tags }}"
+placeholder="e.g. work, urgent, ideas (comma-separated)">
+
+<div class="form-text">Separate multiple tags with commas.</div>
+
+</div>
+
 <button
 class="btn btn-primary">
 
@@ -58,7 +97,7 @@ Update Note
 
 </button>
 
-<a
+
 href="{{ url_for('notes.dashboard') }}"
 class="btn btn-secondary">
 

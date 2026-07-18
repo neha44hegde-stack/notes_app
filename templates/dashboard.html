@@ -16,69 +16,36 @@
 
 </div>
 
-{% if notes %}
+<!-- View tabs: Active / Archived / Trash -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if view == 'active' %}active{% endif %}"
+           href="{{ url_for('notes.dashboard', view='active') }}">
+            Notes
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if view == 'archived' %}active{% endif %}"
+           href="{{ url_for('notes.dashboard', view='archived') }}">
+            Archived
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if view == 'trash' %}active{% endif %}"
+           href="{{ url_for('notes.dashboard', view='trash') }}">
+            Trash
+        </a>
+    </li>
+</ul>
 
-<div class="row">
+<!-- Search + filters -->
+<form method="GET" action="{{ url_for('notes.dashboard') }}" class="row g-2 mb-4">
+    <input type="hidden" name="view" value="{{ view }}">
 
-{% for note in notes %}
-
-<div class="col-md-6 col-lg-4 mb-4">
-
-    <div class="card shadow-sm h-100">
-
-        <div class="card-body">
-
-            <h4 class="card-title">
-
-                {{ note.title }}
-
-            </h4>
-
-            <p class="card-text">
-
-                {{ note.description }}
-
-            </p>
-
-        </div>
-
-        <div class="card-footer bg-white">
-
-            <a href="{{ url_for('notes.edit_note', note_id=note.id) }}"
-               class="btn btn-warning btn-sm">
-
-                Edit
-
-            </a>
-
-            <a href="{{ url_for('notes.edit_note', note_id=note.id) }}"
-               class="btn btn-danger btn-sm"
-               onclick="return confirm('Delete this note?')">
-
-                Delete
-
-            </a>
-
-        </div>
-
+    <div class="col-md-5">
+        <input type="text" name="q" value="{{ query_text }}"
+               class="form-control" placeholder="Search notes...">
     </div>
 
-</div>
-
-{% endfor %}
-
-</div>
-
-{% else %}
-
-<div class="alert alert-info">
-
-    <h4>No Notes Available</h4>
-
-    <p>Create your first note.</p>
-
-</div>
-
-{% endif %}
-
-{% endblock %}
+    <div class="col-md-3">
+        <select name="category_id" class="form-select">
