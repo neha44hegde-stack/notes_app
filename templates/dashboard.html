@@ -157,6 +157,32 @@
 
 </div>
 
+{% if pagination and pagination.pages > 1 %}
+<nav aria-label="Notes pagination">
+<ul class="pagination justify-content-center">
+
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('notes.dashboard', page=pagination.prev_num, view=view, q=query_text) }}">Previous</a>
+    </li>
+
+    {% for page_num in pagination.iter_pages() %}
+        {% if page_num %}
+            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('notes.dashboard', page=page_num, view=view, q=query_text) }}">{{ page_num }}</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% endif %}
+    {% endfor %}
+
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+        <a class="page-link" href="{{ url_for('notes.dashboard', page=pagination.next_num, view=view, q=query_text) }}">Next</a>
+    </li>
+
+</ul>
+</nav>
+{% endif %}
+
 {% else %}
 
 <div class="alert alert-info">
@@ -178,5 +204,7 @@
 {% endif %}
 
 {% endblock %}
+
+
 
 

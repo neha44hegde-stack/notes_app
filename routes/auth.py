@@ -7,7 +7,7 @@
     flash,
     session,
 )
-from extensions import db
+from extensions import db, limiter
 from models import User
 from werkzeug.security import (
     generate_password_hash,
@@ -23,6 +23,7 @@ def home():
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def register():
     if request.method == "POST":
         username = request.form["username"]
@@ -46,6 +47,7 @@ def register():
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def login():
     if request.method == "POST":
         email = request.form["email"]

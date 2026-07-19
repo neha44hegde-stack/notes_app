@@ -1,10 +1,10 @@
 ﻿import os
-from flask import Flask
+from flask import Flask, jsonify
+from sqlalchemy import text
 from extensions import db, jwt, limiter
 from config import config
 from flask_migrate import Migrate
 from flasgger import Swagger
-
 from models import User, Note, Tag, Category, Attachment
 
 
@@ -32,6 +32,25 @@ def create_app():
 
     except Exception as e:
         print("Blueprint import error:", e)
+
+    @app.route("/health")
+    def health():
+        try:
+            db.session.execute(text("SELECT 1"))
+            db_status = "ok"
+        except Exception as e:
+            db_status = f"error: {e}"
+
+        status_code = 200 if db_status == "ok" else 503
+        return (
+            jsonify(
+                {
+                    "status": "ok" if db_status == "ok" else "degraded",
+                    "database": db_status,
+                }
+            ),
+            status_code,
+        )
 
     @app.route("/")
     def hello_world():

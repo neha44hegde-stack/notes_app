@@ -16,6 +16,7 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 
 
 @api_bp.route("/auth/register", methods=["POST"])
+@limiter.limit("5 per minute")
 def api_register():
     """
     Register a new user via the API
@@ -61,6 +62,7 @@ def api_register():
 
 
 @api_bp.route("/auth/login", methods=["POST"])
+@limiter.limit("10 per minute")
 def api_login():
     """
     Log in and receive a JWT access token
@@ -102,7 +104,7 @@ def api_login():
 @jwt_required()
 def get_notes():
     """
-    Get all notes for the logged-in user
+    Get all notes for the logged-in user (paginated)
     ---
     tags:
       - Notes
@@ -116,13 +118,21 @@ def get_notes():
       - in: query
         name: q
         type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: per_page
+        type: integer
     responses:
       200:
-        description: List of notes
+        description: Paginated list of notes
     """
     user_id = int(get_jwt_identity())
     view = request.args.get("view", "active")
     query_text = request.args.get("q", "").strip()
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
 
     query = Note.query.filter_by(user_id=user_id)
 
@@ -136,8 +146,22 @@ def get_notes():
         like = f"%{query_text}%"
         query = query.filter((Note.title.ilike(like)) | (Note.description.ilike(like)))
 
-    notes = query.order_by(Note.is_pinned.desc(), Note.updated_at.desc()).all()
-    return jsonify([note.to_dict() for note in notes]), 200
+    pagination = query.order_by(Note.is_pinned.desc(), Note.updated_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    return (
+        jsonify(
+            {
+                "notes": [note.to_dict() for note in pagination.items],
+                "page": pagination.page,
+                "per_page": pagination.per_page,
+                "total_pages": pagination.pages,
+                "total_items": pagination.total,
+            }
+        ),
+        200,
+    )
 
 
 @api_bp.route("/notes/<int:note_id>", methods=["GET"])
