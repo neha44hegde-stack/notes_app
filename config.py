@@ -4,8 +4,8 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    SECRET_KEY = "notesapp"
-    JWT_SECRET_KEY = "notesapp-jwt-secret"
+    SECRET_KEY = os.environ.get("SECRET_KEY", "notesapp")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "notesapp-jwt-secret")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
     SQLALCHEMY_DATABASE_URI = os.environ.get(
@@ -21,7 +21,7 @@ class Config:
         "png", "jpg", "jpeg", "gif", "pdf", "txt", "docx", "xlsx", "zip"
     }
 
-    TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    TESSERACT_CMD = os.environ.get("TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesseract.exe")
 
     SWAGGER = {
         "title": "Notes App API",
@@ -36,6 +36,8 @@ class Config:
         },
     }
 config = Config
+
+
 
 
 
