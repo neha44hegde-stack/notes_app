@@ -1,4 +1,5 @@
-import os
+﻿import os
+import re
 import uuid
 from datetime import datetime, timezone
 
@@ -159,7 +160,7 @@ def add_note():
         note.tags = _get_or_create_tags(tag_input.split(","), user_id)
 
         db.session.add(note)
-        db.session.flush()  # get note.id before commit, for attachments
+        db.session.flush()
 
         uploaded_files = request.files.getlist("attachments")
         _save_attachments(uploaded_files, note)
@@ -206,6 +207,73 @@ def edit_note(note_id):
     return render_template(
         "edit_note.html", note=note, categories=categories, existing_tags=existing_tags
     )
+
+
+@notes_bp.route("/view_note/<int:note_id>")
+def view_note(note_id):
+    if "user_id" not in session:
+        flash("You must be logged in to view this page", "warning")
+        return redirect(url_for("auth.login"))
+
+    note = Note.query.get_or_404(note_id)
+
+    if note.user_id != session["user_id"]:
+        flash("You cannot view this note", "danger")
+        return redirect(url_for("notes.dashboard"))
+
+    return render_template("view_note.html", note=note)
+
+
+@notes_bp.route("/summarize_note/<int:note_id>", methods=["POST"])
+def summarize_note(note_id):
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    note = Note.query.get_or_404(note_id)
+
+    if note.user_id != session["user_id"]:
+        flash("You cannot summarize this note", "danger")
+        return redirect(url_for("notes.dashboard"))
+
+    plain_text = re.sub("<[^<]+?>", "", note.description).strip()
+
+    if len(plain_text.split()) < 15:
+        flash("Note is too short to summarize meaningfully", "warning")
+        return redirect(url_for("notes.view_note", note_id=note.id))
+
+    try:
+        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+        model_name = "sshleifer/distilbart-cnn-6-6"
+
+        tokenizer = current_app.config.get("SUMMARIZER_TOKENIZER")
+        model = current_app.config.get("SUMMARIZER_MODEL")
+
+        if tokenizer is None or model is None:
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+            current_app.config["SUMMARIZER_TOKENIZER"] = tokenizer
+            current_app.config["SUMMARIZER_MODEL"] = model
+
+        inputs = tokenizer(
+            plain_text, return_tensors="pt", max_length=1024, truncation=True
+        )
+        summary_ids = model.generate(
+            inputs["input_ids"],
+            max_length=80,
+            min_length=20,
+            num_beams=4,
+            early_stopping=True,
+        )
+        summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True).strip()
+
+        note.ai_summary = summary
+        db.session.commit()
+        flash("Summary generated", "success")
+    except Exception as e:
+        flash(f"Failed to generate summary: {e}", "danger")
+
+    return redirect(url_for("notes.view_note", note_id=note.id))
 
 
 @notes_bp.route("/delete_note/<int:note_id>")
@@ -354,16 +422,6 @@ def delete_attachment(attachment_id):
 
     flash("Attachment removed", "info")
     return redirect(url_for("notes.edit_note", note_id=note.id))
-@notes_bp.route("/view_note/<int:note_id>")
-def view_note(note_id):
-    if "user_id" not in session:
-        flash("You must be logged in to view this page", "warning")
-        return redirect(url_for("auth.login"))
 
-    note = Note.query.get_or_404(note_id)
 
-    if note.user_id != session["user_id"]:
-        flash("You cannot view this note", "danger")
-        return redirect(url_for("notes.dashboard"))
 
-    return render_template("view_note.html", note=note)

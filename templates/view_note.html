@@ -52,6 +52,16 @@
 </div>
 {% endif %}
 
+{% if note.ai_summary %}
+<div class="alert alert-info">
+<strong>AI Summary:</strong> {{ note.ai_summary }}
+</div>
+{% endif %}
+
+<form method="POST" action="{{ url_for('notes.summarize_note', note_id=note.id) }}" style="display:inline;">
+<button type="submit" class="btn btn-info btn-sm mb-3">Generate AI Summary</button>
+</form>
+
 <p class="text-muted small">
 Last updated: {{ note.updated_at.strftime('%d %b %Y, %H:%M') }}
 </p>

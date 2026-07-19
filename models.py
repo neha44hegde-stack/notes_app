@@ -92,6 +92,7 @@ class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80), nullable=False)
     description = db.Column(db.Text, nullable=False)
+    ai_summary = db.Column(db.Text, nullable=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=True)
@@ -123,6 +124,7 @@ class Note(db.Model):
             "id": self.id,
             "title": self.title,
             "description": self.description,
+            "ai_summary": self.ai_summary,
             "user_id": self.user_id,
             "category": self.category.to_dict() if self.category else None,
             "tags": [tag.to_dict() for tag in self.tags],
