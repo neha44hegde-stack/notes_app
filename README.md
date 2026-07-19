@@ -1,111 +1,144 @@
-﻿# Flask Notes Application
+# Flask Notes App
 
-A full-featured, production-style notes application built with Flask, SQLAlchemy, and PostgreSQL — supporting rich text editing, file attachments, AI-powered summarization, OCR, voice input, a documented REST API, and containerized deployment.
+A notes application built using **Flask** and **PostgreSQL**. Users can create, edit, organize, and manage their notes with features like rich text editing, file attachments, OCR, AI summarization, and a REST API.
 
 ## Features
 
-- **User Authentication** — secure registration, login, and logout with hashed passwords
-- **Personal Dashboard** — each user manages only their own notes
-- **Search** — full-text search across note titles and descriptions
-- **Tags** — flexible, user-defined tags for organizing notes
-- **Categories** — folder-style organization for notes
-- **Pin Notes** — keep important notes at the top of the dashboard
-- **Archive Notes** — move notes out of the main view without deleting them
-- **Trash & Restore** — soft-delete notes with the ability to restore or permanently delete
-- **Rich Text Editor** — format notes with bold, italics, lists, and more (powered by Quill.js)
-- **File Attachments** — attach files to any note, with download and removal support
-- **AI Note Summarizer** — generate concise summaries of longer notes using a local Hugging Face summarization model (no external API required)
-- **OCR (Image to Text)** — extract text directly from image attachments using Tesseract OCR
-- **Voice to Text** — dictate notes using the browser's built-in speech recognition
-- **REST API** — full CRUD API for notes, tags, and categories, secured with JWT authentication
-- **Interactive API Docs** — Swagger UI available at `/apidocs`
-- **PostgreSQL** — production-grade relational database with Alembic-based migrations
-- **Docker** — containerized deployment with Docker Compose (app + database)
+* User registration and login
+* Create, edit, and delete notes
+* Rich text editor
+* Search notes
+* Categories and tags
+* Pin, archive, and trash notes
+* File attachments
+* OCR to extract text from images
+* AI-based note summarization
+* Voice-to-text input
+* JWT-secured REST API
+* Swagger API documentation
+* PostgreSQL database
+* Docker support
 
 ## Tech Stack
 
-- **Backend:** Flask, Flask-SQLAlchemy, Flask-Migrate (Alembic), Flask-JWT-Extended
-- **Database:** PostgreSQL
-- **Frontend:** Jinja2 templates, Bootstrap, Quill.js (rich text), Web Speech API (voice input)
-- **AI/ML:** Hugging Face Transformers (summarization), Tesseract OCR (image-to-text)
-- **API Docs:** Flasgger (Swagger UI)
-- **Deployment:** Docker, Docker Compose, Gunicorn
+**Backend**
 
-## Installation & Setup (Local Development)
+* Flask
+* SQLAlchemy
+* Flask-Migrate
+* Flask-JWT-Extended
 
-### 1. Clone the repository
+**Database**
+
+* PostgreSQL
+
+**Frontend**
+
+* HTML
+* Bootstrap
+* Jinja2
+* Quill.js
+
+**Other Tools**
+
+* Hugging Face Transformers
+* Tesseract OCR
+* Docker
+* Gunicorn
+
+## Installation
+
+Clone the repository:
+
 ```bash
 git clone https://github.com/neha44hegde-stack/notes_app.git
 cd notes_app
 ```
 
-### 2. Set up a virtual environment
+Create a virtual environment:
+
 ```bash
 python -m venv venv
-# On Windows:
-.\venv\Scripts\activate
 ```
 
-### 3. Install dependencies
+Activate it:
+
+**Windows**
+
+```bash
+venv\Scripts\activate
+```
+
+Install the required packages:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Install PostgreSQL
-Download and install PostgreSQL from [postgresql.org](https://www.postgresql.org/download/), then create a database:
+Create a PostgreSQL database:
+
 ```sql
 CREATE DATABASE notes_app;
 ```
 
-### 5. Install Tesseract OCR
-Download from the [Tesseract Windows installer](https://github.com/UB-Mannheim/tesseract/wiki) (or your platform's package manager on Mac/Linux).
+Set the required environment variables:
 
-### 6. Set environment variables
-```bash
-# Windows PowerShell
-$env:DATABASE_URL = "postgresql://postgres:<your-password>@localhost:5432/notes_app"
-$env:SECRET_KEY = "your-secret-key"
-$env:JWT_SECRET_KEY = "your-jwt-secret-key"
+```text
+DATABASE_URL=postgresql://postgres:<password>@localhost:5432/notes_app
+SECRET_KEY=your_secret_key
+JWT_SECRET_KEY=your_jwt_secret_key
 ```
 
-### 7. Run database migrations
+Run the migrations:
+
 ```bash
 flask db upgrade
 ```
 
-### 8. Run the development server
+Start the application:
+
 ```bash
 flask run
 ```
 
-Visit `http://127.0.0.1:5000` in your browser.
+Open:
 
-## Running with Docker
+```
+http://127.0.0.1:5000
+```
 
-This project also includes a `Dockerfile` and `docker-compose.yml` for containerized deployment.
+## Docker
+
+Run the project using Docker:
 
 ```bash
 docker compose up --build
 ```
 
-This starts two containers:
-- `web` — the Flask application (served via Gunicorn)
-- `db` — a PostgreSQL 16 database
+## API
 
-The app will be available at `http://localhost:5000`.
+Swagger documentation is available at:
 
-**Note:** environment variables in `docker-compose.yml` are set for local development convenience — replace them with secure values before any real deployment.
-
-## API Documentation
-
-Once running, interactive API docs are available at:
+```
 http://127.0.0.1:5000/apidocs
-Key endpoints:
-- `POST /api/auth/register` — create an account
-- `POST /api/auth/login` — receive a JWT access token
-- `GET /api/notes` — list notes (supports `view` and `q` query params)
-- `POST /api/notes` — create a note
-- `PUT /api/notes/<id>` — update a note
-- `DELETE /api/notes/<id>` — move a note to trash
+```
 
-All `/api/notes`, `/api/categories`, and `/api/tags` endpoints require a `Authorization: Bearer <token>` header.
+Some API endpoints:
+
+* `POST /api/auth/register`
+* `POST /api/auth/login`
+* `GET /api/notes`
+* `POST /api/notes`
+* `PUT /api/notes/<id>`
+* `DELETE /api/notes/<id>`
+
+## Future Improvements
+
+* Add unit tests
+* Deploy to a cloud platform
+* Improve UI
+* Add email verification
+
+## License
+
+This project is for learning and educational purposes.
