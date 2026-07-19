@@ -22,6 +22,8 @@ class Config:
         "png", "jpg", "jpeg", "gif", "pdf", "txt", "docx", "xlsx", "zip"
     }
 
+    TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
     SWAGGER = {
         "title": "Notes App API",
         "uiversion": 3,
@@ -34,6 +36,5 @@ class Config:
             }
         },
     }
-
-
 config = Config
+

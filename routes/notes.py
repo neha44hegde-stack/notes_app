@@ -276,6 +276,47 @@ def summarize_note(note_id):
     return redirect(url_for("notes.view_note", note_id=note.id))
 
 
+@notes_bp.route("/ocr_attachment/<int:attachment_id>", methods=["POST"])
+def ocr_attachment(attachment_id):
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+
+    attachment = Attachment.query.get_or_404(attachment_id)
+    note = attachment.note
+
+    if note.user_id != session["user_id"]:
+        abort(403)
+
+    ext = attachment.original_filename.rsplit(".", 1)[-1].lower()
+    if ext not in {"png", "jpg", "jpeg", "gif"}:
+        flash("OCR only works on image attachments", "warning")
+        return redirect(url_for("notes.view_note", note_id=note.id))
+
+    try:
+        import pytesseract
+        from PIL import Image
+
+        pytesseract.pytesseract.tesseract_cmd = current_app.config["TESSERACT_CMD"]
+
+        upload_folder = current_app.config["UPLOAD_FOLDER"]
+        file_path = os.path.join(upload_folder, attachment.filename)
+
+        image = Image.open(file_path)
+        extracted_text = pytesseract.image_to_string(image).strip()
+
+        if not extracted_text:
+            flash("No text detected in the image", "warning")
+        else:
+            note.description += f"<p><em>[Extracted from {attachment.original_filename}]:</em><br>{extracted_text}</p>"
+            db.session.commit()
+            flash("Text extracted and added to note", "success")
+
+    except Exception as e:
+        flash(f"OCR failed: {e}", "danger")
+
+    return redirect(url_for("notes.view_note", note_id=note.id))
+
+
 @notes_bp.route("/delete_note/<int:note_id>")
 def delete_note(note_id):
     if "user_id" not in session:
@@ -422,6 +463,7 @@ def delete_attachment(attachment_id):
 
     flash("Attachment removed", "info")
     return redirect(url_for("notes.edit_note", note_id=note.id))
+
 
 
 

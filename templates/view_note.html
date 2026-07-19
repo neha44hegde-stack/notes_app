@@ -42,10 +42,15 @@
 <h6>Attachments</h6>
 <ul class="list-group">
     {% for attachment in note.attachments %}
-    <li class="list-group-item">
+    <li class="list-group-item d-flex justify-content-between align-items-center">
         <a href="{{ url_for('notes.download_attachment', attachment_id=attachment.id) }}">
             {{ attachment.original_filename }}
         </a>
+        {% if attachment.original_filename.rsplit('.', 1)[-1].lower() in ['png', 'jpg', 'jpeg', 'gif'] %}
+        <form method="POST" action="{{ url_for('notes.ocr_attachment', attachment_id=attachment.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Extract Text</button>
+        </form>
+        {% endif %}
     </li>
     {% endfor %}
 </ul>
@@ -78,3 +83,4 @@ Last updated: {{ note.updated_at.strftime('%d %b %Y, %H:%M') }}
 </div>
 
 {% endblock %}
+
