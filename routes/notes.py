@@ -24,8 +24,23 @@ from models import Note, Tag, Category, Attachment
 notes_bp = Blueprint("notes", __name__)
 
 ALLOWED_TAGS = [
-    "p", "br", "strong", "em", "u", "s", "ul", "ol", "li",
-    "h1", "h2", "h3", "blockquote", "a", "code", "pre", "span"
+    "p",
+    "br",
+    "strong",
+    "em",
+    "u",
+    "s",
+    "ul",
+    "ol",
+    "li",
+    "h1",
+    "h2",
+    "h3",
+    "blockquote",
+    "a",
+    "code",
+    "pre",
+    "span",
 ]
 ALLOWED_ATTRS = {
     "a": ["href", "target", "rel"],
@@ -111,9 +126,7 @@ def dashboard():
 
     if query_text:
         like = f"%{query_text}%"
-        query = query.filter(
-            (Note.title.ilike(like)) | (Note.description.ilike(like))
-        )
+        query = query.filter((Note.title.ilike(like)) | (Note.description.ilike(like)))
 
     if category_id:
         query = query.filter_by(category_id=category_id)
@@ -121,14 +134,20 @@ def dashboard():
     if tag_id:
         query = query.filter(Note.tags.any(Tag.id == tag_id))
 
-    notes = query.order_by(Note.is_pinned.desc(), Note.updated_at.desc()).all()
+    page = request.args.get("page", 1, type=int)
+    per_page = 9
+
+    pagination = query.order_by(Note.is_pinned.desc(), Note.updated_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
 
     categories = Category.query.filter_by(user_id=user_id).all()
     tags = Tag.query.filter_by(user_id=user_id).all()
 
     return render_template(
         "dashboard.html",
-        notes=notes,
+        notes=pagination.items,
+        pagination=pagination,
         categories=categories,
         tags=tags,
         view=view,
@@ -463,7 +482,3 @@ def delete_attachment(attachment_id):
 
     flash("Attachment removed", "info")
     return redirect(url_for("notes.edit_note", note_id=note.id))
-
-
-
-

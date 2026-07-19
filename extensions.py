@@ -1,6 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
+﻿from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from flask_jwt_extended import JWTManager
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 naming_convention = {
     "ix": "ix_%(column_0_label)s",
@@ -13,3 +15,4 @@ naming_convention = {
 metadata = MetaData(naming_convention=naming_convention)
 db = SQLAlchemy(metadata=metadata)
 jwt = JWTManager()
+limiter = Limiter(key_func=get_remote_address)

@@ -9,8 +9,7 @@ class Config:
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL",
-        "postgresql://postgres:CHANGE_ME@localhost:5432/notes_app"
+        "DATABASE_URL", "postgresql://postgres:CHANGE_ME@localhost:5432/notes_app"
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -18,10 +17,20 @@ class Config:
     UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024
     ALLOWED_EXTENSIONS = {
-        "png", "jpg", "jpeg", "gif", "pdf", "txt", "docx", "xlsx", "zip"
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "pdf",
+        "txt",
+        "docx",
+        "xlsx",
+        "zip",
     }
 
-    TESSERACT_CMD = os.environ.get("TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+    TESSERACT_CMD = os.environ.get(
+        "TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    )
 
     SWAGGER = {
         "title": "Notes App API",
@@ -31,20 +40,10 @@ class Config:
                 "type": "apiKey",
                 "name": "Authorization",
                 "in": "header",
-                "description": "Enter: **Bearer &lt;your_token&gt;**"
+                "description": "Enter: **Bearer &lt;your_token&gt;**",
             }
         },
     }
+
+
 config = Config
-
-
-
-
-
-
-
-
-
-
-
-

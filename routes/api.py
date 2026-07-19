@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+﻿from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
@@ -6,13 +6,14 @@ from flask_jwt_extended import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from extensions import db
+from extensions import db, limiter
 from models import User, Note, Tag, Category
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
 
 # ---------- AUTH ----------
+
 
 @api_bp.route("/auth/register", methods=["POST"])
 def api_register():
@@ -96,6 +97,7 @@ def api_login():
 
 # ---------- NOTES ----------
 
+
 @api_bp.route("/notes", methods=["GET"])
 @jwt_required()
 def get_notes():
@@ -132,9 +134,7 @@ def get_notes():
 
     if query_text:
         like = f"%{query_text}%"
-        query = query.filter(
-            (Note.title.ilike(like)) | (Note.description.ilike(like))
-        )
+        query = query.filter((Note.title.ilike(like)) | (Note.description.ilike(like)))
 
     notes = query.order_by(Note.is_pinned.desc(), Note.updated_at.desc()).all()
     return jsonify([note.to_dict() for note in notes]), 200
@@ -327,6 +327,7 @@ def delete_note_api(note_id):
 
 # ---------- CATEGORIES ----------
 
+
 @api_bp.route("/categories", methods=["GET"])
 @jwt_required()
 def get_categories():
@@ -386,6 +387,7 @@ def create_category():
 
 
 # ---------- TAGS ----------
+
 
 @api_bp.route("/tags", methods=["GET"])
 @jwt_required()

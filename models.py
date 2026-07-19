@@ -1,7 +1,6 @@
 ﻿from datetime import datetime, timezone
 from extensions import db
 
-
 note_tags = db.Table(
     "note_tags",
     db.Column("note_id", db.Integer, db.ForeignKey("notes.id"), primary_key=True),
@@ -18,15 +17,11 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
-    notes = db.relationship(
-        "Note", backref="user", lazy=True, cascade="all, delete"
-    )
+    notes = db.relationship("Note", backref="user", lazy=True, cascade="all, delete")
     categories = db.relationship(
         "Category", backref="user", lazy=True, cascade="all, delete"
     )
-    tags = db.relationship(
-        "Tag", backref="user", lazy=True, cascade="all, delete"
-    )
+    tags = db.relationship("Tag", backref="user", lazy=True, cascade="all, delete")
 
 
 class Category(db.Model):

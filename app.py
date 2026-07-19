@@ -1,6 +1,6 @@
-import os
+﻿import os
 from flask import Flask
-from extensions import db, jwt
+from extensions import db, jwt, limiter
 from config import config
 from flask_migrate import Migrate
 from flasgger import Swagger
@@ -16,6 +16,7 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     jwt.init_app(app)
+    limiter.init_app(app)
     swagger = Swagger(app)
 
     os.makedirs(app.instance_path, exist_ok=True)
