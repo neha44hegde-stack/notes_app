@@ -8,10 +8,9 @@ class Config:
     JWT_SECRET_KEY = "notesapp-jwt-secret"
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(
-        BASE_DIR,
-        "instance",
-        "notes.db"
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "DATABASE_URL",
+        "postgresql://postgres:CHANGE_ME@localhost:5432/notes_app"
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -37,4 +36,13 @@ class Config:
         },
     }
 config = Config
+
+
+
+
+
+
+
+
+
 
